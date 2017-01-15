@@ -3,6 +3,8 @@
 This is a scraper that runs on
 [morph.io](https://morph.io/tatey/new-zealand-radio-spectrum-licenses).
 
+![](schema.png)
+
 ## System Dependencies
 
 * [Ruby 2.3](https://www.ruby-lang.org)
