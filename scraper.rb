@@ -1,13 +1,18 @@
 require "byebug"
 require "capybara/poltergeist"
 require "scraperwiki"
-require "set"
+
+VERSION = "0.0.1"
 
 @session = Capybara::Session.new(:poltergeist)
+@logger = Logger.new(STDOUT)
 
+@page = 0
 @licences = {}
 
-def scrape
+def scrape_search_page
+  @logger.info "Scraping search page..."
+
   @session.visit("https://www.rsm.govt.nz/smart-web/smart/page/-smart/domain/licence/SelectLicencePage.wdk?showExit=Yes")
   districts_select = @session.find("#multi-district-select", visible: false)
   districts_select.all("option", visible: false).each do |district_option|
@@ -17,6 +22,10 @@ def scrape
     end
   end
   @session.find(".formButton[title=Search]").click # Search
+end
+
+def scrape_list_page
+  @logger.info "Scraping page #{@page += 1}..."
 
   @session.find(".listTable").all("tbody tr")[1..-1].map do |tr|
     tr.all("td").map(&:text)
@@ -45,6 +54,8 @@ def scrape
 end
 
 def scrape_detail_page(licence_id)
+  @logger.info "Scraping detail page for licence #{licence_id}..."
+
   data = {}
 
   @session.all("a", text: licence_id).first.click
@@ -61,4 +72,14 @@ def scrape_detail_page(licence_id)
   data
 end
 
-scrape
+scrape_search_page
+loop do
+  scrape_list_page
+  next_button = @session.all(".formButton[title=\"Next Page\"]").first
+  if next_button
+    next_button.click
+  else
+    @logger.info "<peon>Job done</peon>"
+    break
+  end
+end
