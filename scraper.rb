@@ -5,6 +5,7 @@ require "scraperwiki"
 VERSION = "0.0.1"
 
 @session = Capybara::Session.new(:poltergeist)
+@session.driver.headers = {"User-Agent" => "Morph.io Scraper https://github.com/tatey/new-zealand-radio-spectrum-licenses (Scaper #{VERSION}) (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"}
 @logger = Logger.new(STDOUT)
 
 @page = 0
