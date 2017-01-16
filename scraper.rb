@@ -4,7 +4,11 @@ require "scraperwiki"
 
 VERSION = "0.0.1"
 
-@session = Capybara::Session.new(:poltergeist)
+Capybara.register_driver :poltergeist_with_suppressed_logger do |app|
+  Capybara::Poltergeist::Driver.new(app, phantomjs_logger: StringIO.new)
+end
+
+@session = Capybara::Session.new(:poltergeist_with_suppressed_logger)
 @session.driver.headers = {"User-Agent" => "Morph.io Scraper https://github.com/tatey/new-zealand-radio-spectrum-licenses (Scaper #{VERSION}) (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"}
 @logger = Logger.new(STDOUT)
 
