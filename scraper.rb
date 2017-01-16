@@ -2,7 +2,7 @@ require "byebug"
 require "capybara/poltergeist"
 require "scraperwiki"
 
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 
 Capybara.register_driver :poltergeist_with_suppressed_logger do |app|
   Capybara::Poltergeist::Driver.new(app, phantomjs_logger: StringIO.new)
@@ -12,26 +12,17 @@ end
 @session.driver.headers = {"User-Agent" => "Morph.io Scraper https://github.com/tatey/new-zealand-radio-spectrum-licenses (Scaper #{VERSION}) (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"}
 @logger = Logger.new(STDOUT)
 
-@page = 0
 @licences = {}
 
-def scrape_search_page
-  @logger.info "Scraping search page..."
+def scrape_search_page(licence_type)
+  @logger.info "Scraping search page for licence type #{licence_type}"
 
   @session.visit("https://www.rsm.govt.nz/smart-web/smart/page/-smart/domain/licence/SelectLicencePage.wdk?showExit=Yes")
-  districts_select = @session.find("#multi-district-select", visible: false)
-  districts_select.all("option", visible: false).each do |district_option|
-    text = district_option.text(:all)
-    if !["New Zealand", "Overseas"].include?(text)
-      districts_select.select(text, visible: false)
-    end
-  end
+  @session.find("select[title=\"Licence Type\"]").select(licence_type)
   @session.find(".formButton[title=Search]").click # Search
 end
 
 def scrape_list_page
-  @logger.info "Scraping page #{@page += 1}..."
-
   @session.find(".listTable").all("tbody tr")[1..-1].map do |tr|
     tr.all("td").map(&:text)
   end.each do |values|
@@ -53,18 +44,15 @@ def scrape_list_page
       @licences[licence_id] = scrape_detail_page(licence_id)
     end
     data.merge!(@licences[licence_id][frequency] || {})
-
     ScraperWiki.save_sqlite([:licence_id, :frequency], data)
   end
 end
 
 def scrape_detail_page(licence_id)
-  @logger.info "Scraping detail page for licence #{licence_id}..."
+  @logger.info "Scraping detail page for licence ID #{licence_id}"
 
   data = {}
-
   @session.all("a", text: licence_id).first.click
-
   @session.all(".listTable")[0].all("tbody tr")[1..-1].each do |tr|
     values = tr.all("td").map(&:text)
     data[values[4]] = {
@@ -73,18 +61,33 @@ def scrape_detail_page(licence_id)
     }
   end
   @session.all(".button[title=Back]").first.click # Back
-
   data
 end
 
-scrape_search_page
-loop do
-  scrape_list_page
-  next_button = @session.all(".formButton[title=\"Next Page\"]").first
-  if next_button
-    next_button.click
-  else
-    @logger.info "<peon>Job done</peon>"
-    break
+[
+  "UHF TV <10dBW (Spectrum)",
+  "UHF TV >=10 & <30dBW (Spectrum)",
+  "UHF TV >=30 & <40dBW (Spectrum)",
+  "UHF TV >=40 & <50dBW (Spectrum)",
+  "UHF TV >=50dBW (Spectrum)",
+  "VHF FM <10dBW (Spectrum)",
+  "VHF FM >=10 & <20dBW (Spectrum)",
+  "VHF FM >=20 & <30dBW (Spectrum)",
+  "VHF FM >=30 & <40dBW (Spectrum)",
+  "VHF FM >=40dBW (Spectrum)",
+  "VHF TV <10dBW (Spectrum)",
+  "VHF TV >=10 & < 30dBW (Spectrum)",
+  "VHF TV >=30 & <50dBW (Spectrum)",
+  "VHF TV >=50dBW (Spectrum)",
+].each do |licence_type|
+  scrape_search_page(licence_type)
+  loop do
+    scrape_list_page
+    next_button = @session.all(".formButton[title=\"Next Page\"]")&.first
+    if next_button
+      next_button.click
+    else
+      break
+    end
   end
 end
