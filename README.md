@@ -1,7 +1,9 @@
-# A morph.io scraper for getting the NZ radio spectrum management licence data
+# A morph.io scraper for getting NZ TV transmitter data
 
 This is a scraper that runs on
-[morph.io](https://morph.io/tatey/new-zealand-radio-spectrum-licenses).
+[morph.io](https://morph.io/tatey/new-zealand-radio-spectrum-licenses). It
+fetches all of the TV transmitter data published by the [New Zealand Radio
+Spectrum Management](https://www.rsm.govt.nz/smart-web/smart/page/-smart/domain/licence/SelectLicencePage.wdk?showExit=Yes).
 
 ![](schema.png)
 
