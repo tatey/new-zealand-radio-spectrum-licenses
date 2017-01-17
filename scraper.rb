@@ -4,6 +4,7 @@ require "scraperwiki"
 
 VERSION = "0.0.2"
 
+Capybara.default_max_wait_time = 7
 Capybara.register_driver :poltergeist_with_suppressed_logger do |app|
   Capybara::Poltergeist::Driver.new(app, phantomjs_logger: StringIO.new)
 end
