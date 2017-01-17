@@ -10,7 +10,7 @@ Capybara.register_driver :poltergeist_with_suppressed_logger do |app|
 end
 
 @session = Capybara::Session.new(:poltergeist_with_suppressed_logger)
-@session.driver.headers = {"User-Agent" => "Morph.io Scraper https://github.com/tatey/new-zealand-radio-spectrum-licenses (Scaper #{VERSION}) (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"}
+@session.driver.headers = {"User-Agent" => "Morph.io Scraper https://morph.io/tatey/new-zealand-television-transmitters-morphio-scraper (Scaper #{VERSION}) (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"}
 @logger = Logger.new(STDOUT)
 
 @licences = {}
