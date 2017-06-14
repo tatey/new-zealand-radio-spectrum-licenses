@@ -1,16 +1,17 @@
 require "byebug"
-require "capybara/poltergeist"
+require "capybara"
 require "scraperwiki"
+require "selenium-webdriver"
 
 VERSION = "0.0.2"
 
 Capybara.default_max_wait_time = 7
-Capybara.register_driver :poltergeist_with_suppressed_logger do |app|
-  Capybara::Poltergeist::Driver.new(app, phantomjs_logger: StringIO.new)
+Capybara.register_driver :chrome do |app|
+  options = Selenium::WebDriver::Chrome::Options.new(args: ["headless", "user-agent=Morph.io Scraper https://morph.io/tatey/new-zealand-television-transmitters-morphio-scraper (Scaper #{VERSION}) (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"])
+  Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
 end
 
-@session = Capybara::Session.new(:poltergeist_with_suppressed_logger)
-@session.driver.headers = {"User-Agent" => "Morph.io Scraper https://morph.io/tatey/new-zealand-television-transmitters-morphio-scraper (Scaper #{VERSION}) (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"}
+@session = Capybara::Session.new(:chrome)
 @logger = Logger.new(STDOUT)
 
 @licences = {}
