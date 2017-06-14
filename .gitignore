@@ -2,4 +2,4 @@
 .byebug_history
 
 # Ignore output of scraper
-data.sqlite
+*.sqlite
