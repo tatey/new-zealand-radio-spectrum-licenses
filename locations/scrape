@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile", __FILE__)
+
+require "bundler/setup"
+require "sequel"
+require "sqlite3"
+require "capybara"
+require "selenium-webdriver"
+
+require "byebug"
+
+# CLI
+unless ARGV.count == 2
+  puts "usage: #{__FILE__} <TRANSMITTERS_DB_PATH> <LOCATIONS_DB_PATH>"
+  puts "       #{__FILE__} ~/Desktop/transmitters.sqlite ~/Desktop/locations.sqlite"
+  abort
+end
+
+# Configure Browser
+Capybara.default_max_wait_time = 7
+Capybara.register_driver :chrome do |app|
+  options = Selenium::WebDriver::Chrome::Options.new(args: ["headless", "user-agent=Scraper https://github.com/tatey/new-zealand-television-transmitters-morphio-scraper (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"])
+  Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
+end
+$session = Capybara::Session.new(:chrome)
+$logger  = Logger.new(STDOUT)
+
+# Configure Stores
+$transmitters = Sequel.connect "sqlite://#{File.expand_path(ARGV[0])}"
+$locations = Sequel.connect "sqlite://#{File.expand_path(ARGV[1])}"
+
+# Scraper
+def grid_to_latlng(grid_reference)
+  map, en = grid_reference.split(" ")
+  easting = en[0..2]
+  northing = en[3..-1]
+
+  $logger.info "Scraping location for grid reference #{grid_reference}"
+
+  $session.visit("https://www.rsm.govt.nz/smart-web/smart/page/-smart/domain/reference/MapReferenceConverter.wdk")
+  $session.find("input[title=MapValue]").set(map)
+  $session.find("input[title=Easting]").set(easting)
+  $session.find("input[title=Northing]").set(northing)
+  $session.find("[title=Convert]").click # Convert
+
+  text = $session.all("table")[5].find("tr:nth-child(4)").text # "LAT/LONG (NZGD2000/WGS84) 174.8031732 -36.8792936"
+  text.split(" ")[-2..-1] # ["174.8031732", "-36.879293"]
+end
+
+$transmitters[:transmitters].each do |row|
+  grid_reference = row[:grid_reference]
+  unless grid_reference =~ /\w+/
+    next
+  end
+
+  if $locations[:locations].first(topo50_grid_reference: grid_reference)
+    next
+  end
+
+  lat, lng = grid_to_latlng(grid_reference)
+  $locations[:locations].insert(topo50_grid_reference: grid_reference, wgs84_latitude: lat, wgs84_longitude: lng)
+end

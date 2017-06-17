@@ -9,7 +9,7 @@ require "selenium-webdriver"
 
 # CLI
 unless ARGV[0]
-  puts "usage: #{__FILE__} <PATH>"
+  puts "usage: #{__FILE__} <TRANSMITTERS_DB_PATH>"
   puts "       #{__FILE__} ~/Desktop/transmitters.sqlite"
   abort
 end
