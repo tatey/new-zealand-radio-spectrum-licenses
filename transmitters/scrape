@@ -38,9 +38,16 @@ def scrape_search_page(licence_type)
 end
 
 def scrape_list_page
-  $session.find(".listTable").all("tbody tr")[1..-1].map do |tr|
-    tr.all("td").map(&:text)
-  end.each do |values|
+  begin
+    rows = $session.find(".listTable").all("tbody tr")[1..-1].map do |tr|
+      tr.all("td").map(&:text)
+    end
+  rescue Capybara::ElementNotFound => error
+    $logger.info "Skipping because no search results"
+    return
+  end
+
+  rows.each do |values|
     licence_id = values[0]
     frequency = values[4]
     data = {
