@@ -1,27 +1,26 @@
-# A morph.io scraper for getting NZ TV transmitter data
+# New Zealand TV Transmitter Data Scraper
 
-This is a scraper that runs on
-[morph.io](https://morph.io/tatey/new-zealand-radio-spectrum-licenses). It
-fetches all of the TV transmitter data published by the [New Zealand Radio
-Spectrum Management](https://www.rsm.govt.nz/smart-web/smart/page/-smart/domain/licence/SelectLicencePage.wdk?showExit=Yes).
-
-![](schema.png)
+This is a collection of super hacky scripts that scrapes all of the TV
+transmitter data published by the [Radio Spectrum Management](https://www.rsm.govt.nz).
 
 ## System Dependencies
 
-* [Ruby 2.3](https://www.ruby-lang.org)
+* [Ruby 2.4](https://www.ruby-lang.org)
 * [Bundler](https://rubygems.org/gems/bundler)
-* [PhantomJS](http://phantomjs.org)
+* [Google Chrome](https://www.google.com/chrome/browser/desktop/index.html)
 
 ## Usage
 
-Install the scraper's dependencies:
+Get all the TV transmitters:
 
-    $ bundle
+    $ ./transmitters/createdb ~/Desktop/transmitters.sqlite
+    $ ./transmitters/scrape ~/Desktop/transmitters.sqlite
 
-Run the scraper:
+Convert NZTOPO50 grid references into WGS85 (Latitude/Longitude):
 
-    $ ./bin/scrape
+    $ ./locations/createdb ~/Desktop/locations.sqlite
+    $ ./transmitters/scrape ~/Desktop/transmitters.sqlite ~/Desktop/locations.sqlite
 
-The scraper will perform a search and then scrape each of the licences into
-a SQLite database named `data.sqlite`.
+## License
+
+Licensed under the MIT license. See [LICENSE.txt](LICENSE.txt)
