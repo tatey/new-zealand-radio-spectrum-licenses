@@ -17,7 +17,7 @@ end
 # Configure Browser
 Capybara.default_max_wait_time = 7
 Capybara.register_driver :chrome do |app|
-  options = Selenium::WebDriver::Chrome::Options.new(args: ["headless", "user-agent=Scraper https://github.com/tatey/new-zealand-television-transmitters-morphio-scraper (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"])
+  options = Selenium::WebDriver::Chrome::Options.new(args: ["headless", "user-agent=Scraper https://github.com/tatey/new-zealand-tv-transmitter-data-scraper (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})"])
   Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
 end
 $session = Capybara::Session.new(:chrome)
