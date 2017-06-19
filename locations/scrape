@@ -43,8 +43,8 @@ def grid_to_latlng(grid_reference)
   $session.find("input[title=Northing]").set(northing)
   $session.find("[title=Convert]").click # Convert
 
-  text = $session.all("table")[5].find("tr:nth-child(4)").text # "LAT/LONG (NZGD2000/WGS84) 174.8031732 -36.8792936"
-  text.split(" ")[-2..-1] # ["174.8031732", "-36.879293"]
+  text = $session.all("table")[5].find("tr:nth-child(4)").text # "LAT/LONG (NZGD2000/WGS84) 174.8031732 -36.8792936" (Note: LAT/LONG is actually back to front)
+  text.split(" ")[-2..-1].reverse # ["-36.879293", "174.8031732"]
 end
 
 $transmitters[:transmitters].each do |row|
