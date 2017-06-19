@@ -16,10 +16,11 @@ Get all the TV transmitters:
     $ ./transmitters/createdb ~/Desktop/transmitters.sqlite
     $ ./transmitters/scrape ~/Desktop/transmitters.sqlite
 
-Convert NZTOPO50 grid references into WGS85 (Latitude/Longitude):
+Convert NZTOPO50 grid references into WGS85 (Latitude/Longitude) and get "area served":
 
     $ ./locations/createdb ~/Desktop/locations.sqlite
     $ ./transmitters/scrape ~/Desktop/transmitters.sqlite ~/Desktop/locations.sqlite
+    $ ./transmitters/geocode ~/Desktop/locations.sqlite
 
 ## License
 

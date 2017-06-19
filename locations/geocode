@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile", __FILE__)
+
+require "bundler/setup"
+require "byebug"
+require "json"
+require "logger"
+require "net/http"
+require "sequel"
+require "sqlite3"
+
+#
+# YOU MUST AGREE AND AHERE TO THE USAGE POLICY https://operations.osmfoundation.org/policies/nominatim/
+#
+
+# CLI
+unless ARGV[0]
+  puts "usage: #{__FILE__} <LOCATIONS_DB_PATH>"
+  puts "       #{__FILE__} ~/Desktop/locations.sqlite"
+  abort
+end
+
+# Configure
+$logger = Logger.new(STDOUT)
+$db     = Sequel.connect "sqlite://#{File.expand_path(ARGV[0])}"
+
+# @return [Hash] Eg: {"place_id"=>"151634603", "licence"=>"Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright", "osm_type"=>"way", "osm_id"=>"377110274", "lat"=>"-39.8897069", "lon"=>"175.0638079", "display_name"=>"Roberts Avenue, Aramoho, Whanganui, Wanganui District, Manawatu-Wanganui, New Zealand/Aotearoa", "address"=>{"road"=>"Roberts Avenue", "suburb"=>"Aramoho", "city"=>"Whanganui", "county"=>"Wanganui District", "region"=>"Manawatu-Wanganui", "country"=>"New Zealand/Aotearoa", "country_code"=>"nz"}, "boundingbox"=>["-39.8944961", "-39.8844682", "175.0594732", "175.0681482"]}
+def get_geocode(latitude, longitude)
+  uri = URI.parse("http://nominatim.openstreetmap.org/reverse?format=json&lat=#{latitude}&lon=#{longitude}&zoom=18&addressdetails=1")
+  net = Net::HTTP.new(uri.host)
+  response = net.get("#{uri.path}?#{uri.query}", "User-Agent" => "Scraper https://github.com/tatey/new-zealand-tv-transmitter-data-scraper (Ruby #{RUBY_VERSION}/#{RUBY_PLATFORM})")
+  JSON.parse(response.body)
+end
+
+$db[:locations].each do |row|
+  latitude = row[:wgs84_latitude]
+  longitude = row[:wgs84_longitude]
+
+  $logger.info "Getting #{latitude},#{longitude}"
+
+  data = get_geocode(latitude, longitude)
+  address = data["address"]
+  unless address
+    $logger.info "Skipping because missing address: #{data}"
+    next
+  end
+
+  region = address["region"] || address["state"]
+  locality = address["county"] || address["suburb"] || address["village"] || address["city"] || address["town"] || address["hamlet"]
+  if region.nil? || locality.nil?
+    $logger.info "Potentially missing info: #{data}"
+  end
+
+  $db[:locations].where(id: row[:id]).update(
+    locality: locality,
+    region: region,
+  )
+  sleep 1 # Be nice
+end

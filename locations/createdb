@@ -17,4 +17,6 @@ DB.create_table! :locations do
   String :topo50_grid_reference
   String :wgs84_latitude
   String :wgs84_longitude
+  String :locality
+  String :region
 end
